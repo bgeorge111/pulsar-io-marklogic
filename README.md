@@ -5,9 +5,11 @@ Apache Pulsar MarkLogic Connector
 
 Sink Connector pushes messages from Apache Pulsar Topic to a MarkLogic target. 
 
-# Build Instructions *
+# Build Instructions #
 TBD
 
-Install and Run 
+# Install and Run # 
+TBD
 
-Sink Configuration
+# Sink Configuration # 
+TBD
