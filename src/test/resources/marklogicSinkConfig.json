@@ -1,0 +1,11 @@
+{
+"mlConnectionHost" :  "localhost",
+"mlConnectionPort" :  8000,
+"mlDatabase" :  "Documents",
+"mlSecurityContext" :  "DIGEST",
+"mlUserName" :  "admin",
+"mlPassword" :  "admin",
+"mlConnectionType" :  "DIRECT",
+"dmsdkBatchSize" :  1,
+"dmsdkThreadCount" :  1
+}

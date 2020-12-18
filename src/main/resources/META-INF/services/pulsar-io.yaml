@@ -1,0 +1,4 @@
+name: MarkLogic
+description: MarkLogic Pulsar Sink connector
+sinkClass: com.marklogic.pulsar.MarkLogicSink
+sinkConfigClass: com.marklogic.pulsar.MarkLogicConfig
