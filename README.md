@@ -61,9 +61,46 @@ This is a basic Sink connector that pushes messages from Apache Pulsar topic to 
 | mlIdStrategyForURI    | false       | The ID Strategy for URI. UUID,JSONPATH,HASH,PULSAR_META_WITH_SLASH, PULSAR_META_HASHED. Default is UUID| 
 | mlIdStrategyPath    | false       | The JSON path for ID Strategy |
 
-
-
-
+# URI generation strategies
+MarkLogic Uris are to be unique. If a conflicting URI is generated, there would be silent overwrite of documents. If the conflicting URIs are in the same batch (when you have dmsdkBatchSize > 1), then there would be errors generated due to conflicting updates. You have a few options listed below to choose your URI generation strategy. Choose the option that best fits you for generating unique URIs. The final URI generated will be 
+{mlDocumentURIPrefix}/{ID generated from mlIdStrategyForURI}/{mlDocumentURISuffix}
+| Value      | Description | Example | 
+| ---------- | ----------- | ------- |
+| UUID | A system generated unique identifier. If you are not sure about your data, then this will be your best option. This is also the default option. | |
+| JSONPATH | Choose a qualified JSON path for generating the ID. | If your document is <br> `{ "Customer" : { "id" : 10001, "name" : "Tim"}}` <br> and if the configuration properties are set as  `"mlDocumentURIPrefix" : "/pulsar-data"`<br> `"mlDocumentURISuffix" : ".json"` <br> `"mlIdStrategyForURI" : "JSONPATH"` <br> `"mlIdStrategyPath" : "/Customer/id"`, the URI that would be generated will be  <br> `/pulsar-data/10001.json`. <br> Note that if "id" is not unique, URIs generated will not be unique. If multiple JSON Paths are provided, then only the first one will be used. | 
+| HASH | A MD5 hash of the values from all the JSON Paths provided. |  If your document is <br> `{ "Customer" : { "id" : 10001, "name" : "Tim"}}` <br> and if the configuration properties are set as  `"mlDocumentURIPrefix" : "/pulsar-data"`<br> `"mlDocumentURISuffix" : ".json"` <br> `"mlIdStrategyForURI" : "HASH"` <br> `"mlIdStrategyPath" : "/Customer/id, /Customer/name"`, the URI that would be generated will be  <br> `/pulsar-data/eba24f0e1c9e3363f0c4f5bcb3317946.json`. <br> Here `eba24f0e1c9e3363f0c4f5bcb33179461` is the MD5 hash value of `10001Tim`.  Note that if hashed value is not unique, URIs generated will not be unique. Multiple JSON Paths can be used, separated by comma
+| PULSAR_META_WITH_SLASH | The URI generated will be having the topic, partitition and sequence number of the message. | For example, if the pulsar topic is persistent://public/default/marklogic-topic, the partition is marklogic-topic-0 and sequence number of message is 48792, and the below configuration properties are set  `"mlDocumentURIPrefix" : "/pulsar-data"`<br> `"mlDocumentURISuffix" : ".json"` <br> `"mlIdStrategyForURI" : "PULSAR_META_WITH_SLASH"` then the URI of the message is <br>`/pulsar-data/persistent/public/default/marklogic-topic/marklogic-topic-0/48792.json` <br> This strategy should ideally generate unique URIs, but note that it depends on the Pulsar's capability to generate unique sequence numbers within in a topic partition. Note that the `persistent://` in topic's URI is changed to `persistent/` |
+| PULSAR_META_HASHED | The URI generated will be the hashed value of topic, partition and sequence number. |  For example, if the pulsar topic is `persistent://public/default/marklogic-topic`, the partition is `marklogic-topic-0` and sequence number of message is `48792`, and the below configuration properties are set  `"mlDocumentURIPrefix" : "/pulsar-data"`<br> `"mlDocumentURISuffix" : ".json"` <br> `"mlIdStrategyForURI" : "PULSAR_META_HASHED"` <br> then the URI of the message is <br>`/pulsar-data/9cdfc945708835835da746a35c5a7fca.json` <br> where `9cdfc945708835835da746a35c5a7fca` is the MD5 hash value of `persistent://public/default/marklogic-topicmarklogic-topic-048792` <br> This strategy should ideally generate unique URIs, but note that it depends on the Pulsar's capability to generate unique sequence numbers within in a topic partition.
 
 
 # Example
+	{"configs" : {
+	"mlConnectionHost" :  "mydomainpart1.mydomainpart2.a.marklogicsvc.com",
+	"mlConnectionPort" :  8010,
+	"mlDatabase" :  "data-hub-STAGING",
+	"mlSecurityContext" :  "BASIC",
+	"mlUserName" :  "dh-admin-1",
+	"mlPassword" :  "mypwd",
+	"mlConnectionType" :  "GATEWAY",
+	"mlSimpleSSL" :  "true",
+	"mlPathToCertFile" :  "",
+	"mlPasswordForCertFile" :  "",
+	"mlExternalName" :  "",
+	"mlHostNameVerifier" :  "ANY",
+	"mlTlsVersion" :  "TLSv1.2",
+	"mlSSLMutualAuth" :  "false",
+	"dmsdkBatchSize" :  1,
+	"dmsdkThreadCount" :  10,
+	"dmsdkTransform" :  "",
+	"dmsdkTransformParams" :  "",
+	"mlDocumentCollections" :  "coll-1wayauth-strict",
+	"mlDocumentFormat" :  "JSON",
+	"mlDocumentMimeType" :  "",
+	"mlDocumentPermissions" :  "rest-reader,read,rest-writer,update",
+	"mlDocumentURIPrefix" :  "/pulsar-data/1wayauth/strict/",
+	"mlDocumentURISuffix" :  ".json",
+	"mlIdStrategyForURI" : "JSONPATH",
+	"mlIdStrategyPath" : "/CustomerInfo/key",
+	"mlAddTopicAsCollections" : "true"
+	}
+	}
