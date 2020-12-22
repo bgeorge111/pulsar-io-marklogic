@@ -17,9 +17,9 @@ public  class IdStrategyFactory {
 				return (new HashedJSONPathsStrategy(strategyPaths.trim().split(",")));
 			case "UUID":
 				return (new DefaultStrategy());
-			case "KAFKA_META_WITH_SLASH":
+			case "PULSAR_META_WITH_SLASH":
 				return (new PulsarMetaStrategy());
-			case "KAFKA_META_HASHED":
+			case "PULSAR_META_HASHED":
 				return (new HashedPulsarMetaStrategy());
 			default: 
 				return (new DefaultStrategy());

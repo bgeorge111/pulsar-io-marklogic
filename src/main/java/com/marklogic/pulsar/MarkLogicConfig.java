@@ -83,7 +83,7 @@ public class MarkLogicConfig implements Serializable {
 	@FieldDoc(required = false, defaultValue = "", help = "Comma delimited collections to add each document to")
 	private String mlDocumentCollections;
 
-	@FieldDoc(required = false, defaultValue = "", help = "Defines format of each document; can be one of json, xml, text, binary, or unknown")
+	@FieldDoc(required = true, defaultValue = "", help = "Defines format of each document; can be one of json, xml, text, binary, or unknown")
 	private String mlDocumentFormat;
 
 	@FieldDoc(required = false, defaultValue = "", help = "Defines the mime type of each document; typically format is set instead of mime type")

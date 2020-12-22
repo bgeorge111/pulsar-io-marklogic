@@ -1,8 +1,6 @@
 package com.marklogic.pulsar;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.pulsar.functions.api.Record;
@@ -131,7 +129,7 @@ public class MarkLogicSink implements Sink<byte[]> {
 		recordContent.setId(idStrategy.generateId(content, record.getTopicName().get(), record.getPartitionId().get(),
 				record.getRecordSequence().get()));
 		if (mlConfig.getMlAddTopicAsCollections()) {
-			recordContent.setAdditionalMetadata(meta.withCollections(record.getTopicName().get().replace("persistent://", "")));
+			recordContent.setAdditionalMetadata(meta.withCollections(record.getTopicName().get()));
 		}
 		try {
 			writeBatcher.add(documentWriteOperationBuilder.build(recordContent));
