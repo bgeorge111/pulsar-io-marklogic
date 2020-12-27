@@ -3,7 +3,7 @@ package com.marklogic.pulsar;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.SecurityContextType;
-import com.marklogic.pulsar.MarkLogicConfig;
+import com.marklogic.pulsar.config.MarkLogicAbstractConfig;
 import com.marklogic.pulsar.database.DefaultDatabaseClientConfigBuilder;
 
 import org.testng.annotations.BeforeClass;
@@ -20,7 +20,7 @@ public class BuildDatabaseClientConfigTest {
 
 	DefaultDatabaseClientConfigBuilder builder = new DefaultDatabaseClientConfigBuilder();
 
-	MarkLogicConfig config = new MarkLogicConfig();
+	MarkLogicAbstractConfig config = new MarkLogicAbstractConfig();
 
 	@BeforeClass
 	public void setup() throws IOException {

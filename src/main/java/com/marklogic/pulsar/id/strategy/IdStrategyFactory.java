@@ -2,11 +2,11 @@ package com.marklogic.pulsar.id.strategy;
 
 import java.util.Map;
 
-import com.marklogic.pulsar.MarkLogicConfig;
+import com.marklogic.pulsar.config.MarkLogicSinkConfig;
 
 public  class IdStrategyFactory {
 	
-	public static IdStrategy getIdStrategy(MarkLogicConfig config) {
+	public static IdStrategy getIdStrategy(MarkLogicSinkConfig config) {
 		String strategyType = (String) config.getMlIdStrategyForURI();
 		String strategyPaths= (String) config.getMlIdStrategyPath();
 		

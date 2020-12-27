@@ -18,6 +18,8 @@ import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
+import com.marklogic.pulsar.config.MarkLogicAbstractConfig;
+import com.marklogic.pulsar.config.MarkLogicSinkConfig;
 import com.marklogic.pulsar.database.DefaultDatabaseClientConfigBuilder;
 import com.marklogic.pulsar.database.DocumentWriteOperationBuilder;
 import com.marklogic.pulsar.database.RecordContent;
@@ -32,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * function to use this sink. This class assumes that the input will be JSON
  * documents.
  */
-@Connector(name = "marklogic", type = IOType.SINK, help = "A sink connector that sends pulsar messages to marklogic", configClass = MarkLogicConfig.class)
+@Connector(name = "marklogic", type = IOType.SINK, help = "A sink connector that sends pulsar messages to marklogic", configClass = MarkLogicSinkConfig.class)
 @Slf4j
 @Data
 public class MarkLogicSink implements Sink<byte[]> {
@@ -41,22 +43,22 @@ public class MarkLogicSink implements Sink<byte[]> {
 	private DataMovementManager dataMovementManager;
 	private WriteBatcher writeBatcher;
 	private DocumentWriteOperationBuilder documentWriteOperationBuilder;
-	private MarkLogicConfig mlConfig;
+	private MarkLogicSinkConfig mlConfig;
 	
 	@Override
 	public void open(Map<String, Object> config, SinkContext sinkContext) throws Exception {
 		log.info("Opening MarkLogic Connection");
-		mlConfig = MarkLogicConfig.load(config);
+		mlConfig = MarkLogicSinkConfig.load(config);
 		documentWriteOperationBuilder = new DocumentWriteOperationBuilder();
 		DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder()
-				.buildDatabaseClientConfig(mlConfig);
+				.buildDatabaseClientConfig(mlConfig.getMarkLogicAbstractConfig());
 		databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
 
 		dataMovementManager = databaseClient.newDataMovementManager();
 		writeBatcher = dataMovementManager.newWriteBatcher().withJobName("MarkLogic Sink Connector Job")
 				.withBatchSize(mlConfig.getDmsdkBatchSize()).withThreadCount(mlConfig.getDmsdkThreadCount());
 
-		ServerTransform transform = buildServerTransform(mlConfig);
+		ServerTransform transform = buildServerTransform(mlConfig.getMarkLogicAbstractConfig());
 		if (transform != null) {
 			writeBatcher.withTransform(transform);
 		}
@@ -81,7 +83,7 @@ public class MarkLogicSink implements Sink<byte[]> {
 		return;
 	}
 
-	protected ServerTransform buildServerTransform(final MarkLogicConfig mlConfig) {
+	protected ServerTransform buildServerTransform(final MarkLogicAbstractConfig mlConfig) {
 		String transform = mlConfig.getDmsdkTransform();
 		if (transform != null && transform.trim().length() > 0) {
 			ServerTransform t = new ServerTransform(transform);

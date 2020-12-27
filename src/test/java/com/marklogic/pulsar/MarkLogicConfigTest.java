@@ -2,6 +2,8 @@ package com.marklogic.pulsar;
 
 import org.testng.annotations.Test;
 
+import com.marklogic.pulsar.config.MarkLogicSinkConfig;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -17,7 +19,7 @@ public class MarkLogicConfigTest {
 	@Test
 	public void testMap() throws IOException {
 		final Map<String, Object> map = TestHelper.createMap();
-		final MarkLogicConfig cfg = MarkLogicConfig.load(map);
+		final MarkLogicSinkConfig cfg = MarkLogicSinkConfig.load(map);
 		assertEquals(cfg.getMlConnectionHost(), TestHelper.MLHOST);
 		assertEquals(cfg.getMlDatabase(), TestHelper.MLDB);
 		assertEquals(cfg.getMlConnectionPort(), TestHelper.MLPORT);
@@ -30,7 +32,7 @@ public class MarkLogicConfigTest {
 	@Test
 	public void testYaml() throws IOException {
 		final File yaml = getFile("marklogicSinkConfig.json");
-		final MarkLogicConfig cfg = MarkLogicConfig.load(yaml.getAbsolutePath());
+		final MarkLogicSinkConfig cfg = MarkLogicSinkConfig.load(yaml.getAbsolutePath());
 
 		assertEquals(cfg.getMlConnectionHost(), TestHelper.MLHOST);
 		assertEquals(cfg.getMlDatabase(), TestHelper.MLDB);

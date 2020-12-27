@@ -18,12 +18,12 @@ import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.client.ext.modulesloader.ssl.SimpleX509TrustManager;
-import com.marklogic.pulsar.MarkLogicConfig;
+import com.marklogic.pulsar.config.MarkLogicAbstractConfig;
 
 public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigBuilder {
 
 	@Override
-	public DatabaseClientConfig buildDatabaseClientConfig(MarkLogicConfig mlConfig) {
+	public DatabaseClientConfig buildDatabaseClientConfig(MarkLogicAbstractConfig mlConfig) {
 		DatabaseClientConfig clientConfig = new DatabaseClientConfig();
 		clientConfig.setCertFile(mlConfig.getMlPathToCertFile());
 		clientConfig.setCertPassword(mlConfig.getMlPasswordForCertFile());
@@ -74,7 +74,7 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 	 *
 	 * @param clientConfig
 	 */
-	protected DatabaseClientConfig configureHostNameVerifier(DatabaseClientConfig clientConfig, MarkLogicConfig mlConfig) {
+	protected DatabaseClientConfig configureHostNameVerifier(DatabaseClientConfig clientConfig, MarkLogicAbstractConfig mlConfig) {
 		String sslHostNameVerifier = mlConfig.getMlHostNameVerifier();
 		if ("ANY".equals(sslHostNameVerifier))
 			clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.ANY);
@@ -87,7 +87,7 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 		return clientConfig;
 	}
 
-	protected DatabaseClientConfig configureCustomSslConnection(DatabaseClientConfig clientConfig, MarkLogicConfig mlConfig) {
+	protected DatabaseClientConfig configureCustomSslConnection(DatabaseClientConfig clientConfig, MarkLogicAbstractConfig mlConfig) {
 		Boolean ssl = mlConfig.getMlSSL();
 		String tlsVersion = mlConfig.getMlTlsVersion();
 		Boolean sslMutualAuth = mlConfig.getMlSSLMutualAuth();

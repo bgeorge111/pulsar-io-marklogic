@@ -1,6 +1,9 @@
-package com.marklogic.pulsar;
+package com.marklogic.pulsar.config;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,7 +20,7 @@ import java.util.Map;
 import org.apache.pulsar.io.core.annotations.FieldDoc;
 
 /**
- * Configuration class for the MarkLogic Connectors.
+ * Configuration class for all MarkLogic Connectors.
  */
 @Data
 @Setter
@@ -25,7 +28,7 @@ import org.apache.pulsar.io.core.annotations.FieldDoc;
 @EqualsAndHashCode
 @ToString
 @Accessors(chain = true)
-public class MarkLogicConfig implements Serializable {
+public class MarkLogicAbstractConfig implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -77,27 +80,6 @@ public class MarkLogicConfig implements Serializable {
 	@FieldDoc(required = false, defaultValue = ",", help = "Delimiter for transform parameter names and values; defaults to a comma")
 	private String dmsdkTransformParamDelimiter;
 
-	@FieldDoc(required = false, defaultValue = "false", help = "Indicates if the topic name should be added to the set of collections for a document")
-	private Boolean mlAddTopicAsCollections;
-
-	@FieldDoc(required = false, defaultValue = "", help = "Comma delimited collections to add each document to")
-	private String mlDocumentCollections;
-
-	@FieldDoc(required = true, defaultValue = "", help = "Defines format of each document; can be one of json, xml, text, binary, or unknown")
-	private String mlDocumentFormat;
-
-	@FieldDoc(required = false, defaultValue = "", help = "Defines the mime type of each document; typically format is set instead of mime type")
-	private String mlDocumentMimeType;
-
-	@FieldDoc(required = false, defaultValue = "", help = "Comma delimited permissions to add to each document; role1,capability1,role1,capability2,role2,capability1")
-	private String mlDocumentPermissions;
-
-	@FieldDoc(required = false, defaultValue = "", help = "Prefix to prepend to each generated URI")
-	private String mlDocumentURIPrefix;
-
-	@FieldDoc(required = false, defaultValue = "", help = "Suffix to append to each generated URI")
-	private String mlDocumentURISuffix;
-
 	@FieldDoc(required = false, defaultValue = "false", help = "Whether SSL connection to the App server")
 	private Boolean mlSSL;
 
@@ -110,23 +92,20 @@ public class MarkLogicConfig implements Serializable {
 	@FieldDoc(required = false, defaultValue = "", help = "Mutual Authentication for Basic or Digest: true or false")
 	private Boolean mlSSLMutualAuth;
 
-	@FieldDoc(required = false, defaultValue = "", help = "The ID Strategy for URI")
-	private String mlIdStrategyForURI;
-
-	@FieldDoc(required = false, defaultValue = "", help = "The JSON path for ID Strategy")
-	private String mlIdStrategyPath;
-
-	public static MarkLogicConfig load(String yamlFile) throws IOException {
+	public static MarkLogicAbstractConfig load(String yamlFile) throws IOException {
 		final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-		final MarkLogicConfig cfg = mapper.readValue(new File(yamlFile), MarkLogicConfig.class);
+		final MarkLogicAbstractConfig cfg = mapper.readValue(new File(yamlFile), MarkLogicAbstractConfig.class);
 
 		return cfg;
 	}
 
-	public static MarkLogicConfig load(Map<String, Object> map) throws IOException {
+	public static MarkLogicAbstractConfig load(Map<String, Object> map) throws IOException {
 		final ObjectMapper mapper = new ObjectMapper();
-		final MarkLogicConfig cfg = mapper.readValue(new ObjectMapper().writeValueAsString(map),
-				MarkLogicConfig.class);
+		mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+		mapper.setVisibilityChecker(VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY));
+
+		final MarkLogicAbstractConfig cfg = mapper.readValue(new ObjectMapper().writeValueAsString(map),
+				MarkLogicAbstractConfig.class);
 		return cfg;
 	}
 

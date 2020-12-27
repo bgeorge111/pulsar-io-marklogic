@@ -1,13 +1,13 @@
 package com.marklogic.pulsar.database;
 
 import com.marklogic.client.ext.DatabaseClientConfig;
-import com.marklogic.pulsar.MarkLogicConfig;
+import com.marklogic.pulsar.config.MarkLogicAbstractConfig;
 
 /**
- * Defines how a map of properties read in by Kafka are used to build an instance of DatabaseClientConfig.
+ * Defines how a map of properties read in by Pulsar are used to build an instance of DatabaseClientConfig.
  */
 public interface DatabaseClientConfigBuilder {
 
-	DatabaseClientConfig buildDatabaseClientConfig(MarkLogicConfig mlConfig);
+	DatabaseClientConfig buildDatabaseClientConfig(MarkLogicAbstractConfig mlConfig);
 
 }
