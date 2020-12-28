@@ -26,6 +26,7 @@ This is a basic connector that connects MarkLogic and Apache pulsar. The connect
 5. Create the new connector using below command 
 
 	`bin/pulsar-admin sinks create --name <connector name> --archive <path to the .nar archive file> --inputs <source pulsar topic> --sink-config-file <path to the configuration file> --processing-guarantees EFFECTIVELY_ONCE`
+	
 	`bin/pulsar-admin sources create --name <connector name> --archive <path to the .nar archive file> ----destination-topic-name  <destination pulsar topic> --source-config-file <path to the configuration file>`
 
 *There are other options for pulsar-admin. Please see apache pulsar documentation for details.*
