@@ -59,6 +59,21 @@ public class MarkLogicSinkConfig extends MarkLogicAbstractConfig implements Seri
 	@FieldDoc(required = false, defaultValue = "", help = "The JSON path for ID Strategy")
 	private String mlIdStrategyPath;
 	
+	@FieldDoc(required = false, defaultValue = "", help = "The Type of DHF. The options are dhs or onprem or cloud.")
+	private String dhfType;
+	
+	@FieldDoc(required = false, defaultValue = "", help = "The DHF properties. The options are default, custom.")
+	private String dhfProperties;
+	
+	@FieldDoc(required = false, defaultValue = "", help = "The properties file path from which dhf properties should be taken. Applies only when dhfProperties is custom. Only fully qualified path to the properties file is supported. ")
+	private String dhfPropertiesPath;
+	
+	@FieldDoc(required = false, defaultValue = "", help = "The DHF flow to run when messages are inserted")
+	private String dhfFlowName;
+	
+	@FieldDoc(required = false, defaultValue = "", help = "The DHF flow steps to run. If blank entire flow to run.")
+	private String dhfFlowSteps;
+	
 	public static MarkLogicSinkConfig load(String yamlFile) throws IOException {
 		final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 		final MarkLogicSinkConfig cfg = mapper.readValue(new File(yamlFile), MarkLogicSinkConfig.class);

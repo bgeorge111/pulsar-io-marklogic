@@ -58,6 +58,11 @@ This is a basic connector that connects MarkLogic and Apache pulsar. The connect
 | mlDocumentPermissions    | false       | Comma delimited permissions to add to each document; role1,capability1,role1,capability2,role2,capability1 | Sink |
 | mlDocumentURIPrefix    | false       | Prefix to prepend to each generated URI Ex. /pulsar-data/mytopic | Sink |
 | mlDocumentURISuffix    | false       | Suffix to append to each generated URI Ex. .json | Sink |
+| dhfFlowName | false | The flow that has to be run on ingest | Sink | 
+| dhfFlowSteps | false | The flow steps that needs to be run. Multiple steps can be comma separated. Ex. 2,3 | Sink | 
+| dhfType    | false       | Whether the data hub framework is DHS or onprem/cloud. Valid values are dhs, onprem, cloud. This has effect only if dhfFlowName is set | Sink |
+| dhfProperties | false | Whether to apply default properties to build hubConfig. For example, if dhfType=dhs and dhfProperties=default, then there are no other hub configuration properties are required. Valid values are 'default' and 'custom'. This has effect only if dhfFlowName is set  | Sink | 
+| dhfPropertiesPath | false | The properties file from which the hub Properties are to be loaded. This should be an absolute path and has effect only if dhfFlowName is set. | Sink | 
 | mlSSL    | false       | Whether a custom SSL connection to the App server like mutual Auth. The dependency on this will be eliminated in future| Both |
 | mlHostNameVerifier    | false       | The strictness of Host Verifier - ANY, COMMON, STRICT | Both |
 | mlSSLMutualAuth    | false       | Mutual Authentication for Basic or Digest: true or false | Both |
@@ -67,6 +72,7 @@ This is a basic connector that connects MarkLogic and Apache pulsar. The connect
 | dmsdkIsSourceQuerySerialized | true | Is the Source query a raw CTS query or a serialized Query | Source | 
 | batchSourceConfig.discoveryTriggererClassName | true | The class that implements the Batch job triggerer. Default is com.marklogic.pulsar.config.CronTriggerer. | Source | 
 | batchSourceConfig.discoveryTriggererConfig.__CRON__ | true | The cron expression to schedule the Source batch job. Ex. 0 0/5 * * * ? | Source |  
+
 
 # URI generation strategies (Applies only for Sink connector)
 MarkLogic Uris are to be unique. If a conflicting URI is generated, there would be silent overwrite of documents. If the conflicting URIs are in the same batch (when you have dmsdkBatchSize > 1), then there would be errors generated due to conflicting updates. You have a few options listed below to choose your URI generation strategy. Choose the option that best fits you for generating unique URIs. The final URI generated will be 
@@ -110,6 +116,45 @@ MarkLogic Uris are to be unique. If a conflicting URI is generated, there would 
 	"mlIdStrategyPath" : "/CustomerInfo/key",
 	"mlAddTopicAsCollections" : "true"
 	}
+	}
+	
+# Sink Configuration with DHF (DHS) 
+
+	{
+	    "configs": {
+		"mlConnectionHost": "myDomain",
+		"mlConnectionPort": 8010,
+		"mlDatabase": "data-hub-STAGING",
+		"mlSecurityContext": "BASIC",
+		"mlUserName": "dh-admin-1",
+		"mlPassword": "MarkLogic*001",
+		"mlConnectionType": "GATEWAY",
+		"mlSimpleSSL": "true",
+		"mlPathToCertFile": "",
+		"mlPasswordForCertFile": "",
+		"mlExternalName": "",
+		"mlHostNameVerifier": "ANY",
+		"mlTlsVersion": "TLSv1.2",
+		"mlSSLMutualAuth": "false",
+		"dmsdkBatchSize": 50,
+		"dmsdkThreadCount": 10,
+		"dmsdkTransform": "insertTSTransform",
+		"dmsdkTransformParams": "",
+		"mlDocumentCollections": "customers",
+		"mlDocumentFormat": "JSON",
+		"mlDocumentMimeType": "",
+		"mlDocumentPermissions": "rest-reader,read,rest-writer,update",
+		"mlDocumentURIPrefix": "/pulsar-data/1wayauth/strict/",
+		"mlDocumentURISuffix": ".json",
+		"mlIdStrategyForURI": "JSONPATH",
+		"mlIdStrategyPath": "/CustomerInfo/key",
+		"mlAddTopicAsCollections": "true",
+		"dhfType": "dhs",
+		"dhfProperties": "default",
+		"dhfPropertiesPath": "",
+		"dhfFlowName": "CustomerIngest",
+		"dhfFlowSteps": "2"
+	    }
 	}
 
 # Source Configuration Example

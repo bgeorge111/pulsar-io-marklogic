@@ -1,7 +1,15 @@
 package com.marklogic.pulsar;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.stream.Stream;
 
 import org.apache.pulsar.functions.api.Record;
 import org.apache.pulsar.io.core.Sink;
@@ -18,6 +26,9 @@ import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
+import com.marklogic.hub.DatabaseKind;
+import com.marklogic.hub.impl.HubConfigImpl;
+import com.marklogic.mgmt.util.SimplePropertySource;
 import com.marklogic.pulsar.config.MarkLogicAbstractConfig;
 import com.marklogic.pulsar.config.MarkLogicSinkConfig;
 import com.marklogic.pulsar.database.DefaultDatabaseClientConfigBuilder;
@@ -53,7 +64,9 @@ public class MarkLogicSink implements Sink<byte[]> {
 		DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder()
 				.buildDatabaseClientConfig(mlConfig.getMarkLogicAbstractConfig());
 		databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
-
+		
+		HubConfigImpl hubConfig = null;
+		
 		dataMovementManager = databaseClient.newDataMovementManager();
 		writeBatcher = dataMovementManager.newWriteBatcher().withJobName("MarkLogic Sink Connector Job")
 				.withBatchSize(mlConfig.getDmsdkBatchSize()).withThreadCount(mlConfig.getDmsdkThreadCount());
@@ -62,7 +75,7 @@ public class MarkLogicSink implements Sink<byte[]> {
 		if (transform != null) {
 			writeBatcher.withTransform(transform);
 		}
-
+		
 		writeBatcher.onBatchSuccess(batch -> {
 			if (log.isDebugEnabled()) {
 				log.info("Marklogic Connector::Batch {} wrote, {} at {}", batch.getJobBatchNumber(),
@@ -77,12 +90,100 @@ public class MarkLogicSink implements Sink<byte[]> {
 				log.warn("Marklogic Connector::Batch Failed on Retrying also." + e.getMessage());
 			}
 		});
+		/*
+		 * Build a success listener only if flow name is set. All DHF configurations will be ignored 
+		 * if a flowName is not configured.
+		 */
+		final String flowName = mlConfig.getDhfFlowName();
+		if (flowName != null && flowName.trim().length() > 0) {
+			writeBatcher.onBatchSuccess(buildSuccessListener(flowName, mlConfig, hubConfig));
+		}
 
 		dataMovementManager.startJob(writeBatcher);
 		log.info("Opened MarkLogic Connection with a Write Batcher. Job ID = {}", writeBatcher.getJobId());
 		return;
 	}
+	
+	protected RunFlowWriteBatchListener buildSuccessListener(String flowName, MarkLogicSinkConfig mlConfig, HubConfigImpl hubConfig) {
+		String logMessage = String.format("After ingesting a batch, will run flow '%s'", flowName);
+		final String flowSteps = mlConfig.getDhfFlowSteps();
+		List<String> steps = null;
+		if (flowSteps != null && flowSteps.trim().length() > 0) {
+			steps = Arrays.asList(flowSteps.split(","));
+			logMessage += String.format(" with steps '%s' constrained to the URIs in that batch", steps.toString());
+		}
+		log.info(logMessage);
+		hubConfig = buildHubConfig(mlConfig);
+		RunFlowWriteBatchListener listener = new RunFlowWriteBatchListener(flowName, steps, hubConfig);
+		return listener;
+	}
 
+	protected HubConfigImpl buildHubConfig(MarkLogicSinkConfig mlConfig) {
+		/*Start with default and then customize based on the configuration. Many times default will not be enough
+		 * 
+		 */
+		HubConfigImpl hubConfig = HubConfigImpl.withDefaultProperties();
+        hubConfig.setHost(mlConfig.getMlConnectionHost());
+        hubConfig.setMlUsername(mlConfig.getMlUserName());
+        hubConfig.setMlPassword(mlConfig.getMlPassword());
+        
+        /*
+         * Customize the hubConfig if dhfType=dhs & dhfProperties = default. 
+         */
+        if ( "DHS".equalsIgnoreCase(mlConfig.getDhfType()) && 
+        	 "DEFAULT".equalsIgnoreCase(mlConfig.getDhfProperties())) 
+        {
+        	log.info("Creating DHS Default hubConfig.");
+        	hubConfig = buildDHSDefaultHubConfig(hubConfig);
+        }
+        
+        /*
+         * Customize the hubConfig by loading the properties from properties file.   
+         */
+        
+        if ("CUSTOM".equalsIgnoreCase(mlConfig.getDhfProperties())) 
+        {
+        	log.info("Creating custom hub configuration based on configuration.");
+        	hubConfig = buildCustomHubConfig(mlConfig,hubConfig);
+        }
+        
+        return hubConfig;
+	}
+
+	protected HubConfigImpl buildCustomHubConfig(MarkLogicSinkConfig mlConfig, HubConfigImpl hubConfig) {
+		Properties props = new Properties();
+		InputStream input = null;
+		
+		try {
+			input = new FileInputStream(mlConfig.getDhfPropertiesPath());
+		} catch (FileNotFoundException e) {
+			log.error("Unable  to create HubConfig. Pls check the configurations again" + e.getMessage());
+		}
+
+		try {
+			props.load(input);
+		} catch (IOException e) {
+			log.error("Unable  to create HubConfig. Pls check the configurations again" + e.getMessage());
+		}
+			
+		hubConfig.applyProperties(new SimplePropertySource(props));
+		return hubConfig;
+	}
+	
+	protected HubConfigImpl buildDHSDefaultHubConfig(HubConfigImpl hubConfig) {
+		
+		Stream.of(DatabaseKind.STAGING, DatabaseKind.FINAL, DatabaseKind.JOB).forEach(kind -> hubConfig.setAuthMethod(kind, "basic"));
+		Stream.of(DatabaseKind.STAGING, DatabaseKind.FINAL, DatabaseKind.JOB).forEach(kind -> hubConfig.setSimpleSsl(kind, true));
+		hubConfig.setPort(DatabaseKind.STAGING, 8010);
+		hubConfig.setPort(DatabaseKind.FINAL, 8011);
+		hubConfig.setPort(DatabaseKind.JOB, 8013);
+		Properties props = new Properties();
+		props.setProperty("mlIsHostLoadBalancer", "true");
+		hubConfig.applyProperties(new SimplePropertySource(props));
+		return hubConfig;
+		
+	}
+	
 	protected ServerTransform buildServerTransform(final MarkLogicAbstractConfig mlConfig) {
 		String transform = mlConfig.getDmsdkTransform();
 		if (transform != null && transform.trim().length() > 0) {
